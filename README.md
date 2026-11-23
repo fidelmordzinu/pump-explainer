@@ -3,9 +3,18 @@
 A 1080 × 1920, 30 fps Remotion video about pressure-tank short-cycling. The
 composition reads its runtime and narration from `public/voiceover.mp3`. Six
 scenes begin at 00:00, 00:16, 00:30, 00:46, 01:00, and 01:16; the last scene
-runs to the end of the narration. Real hardware photos and shaded equipment
-renders live in `public/assets/`, with compact animated overlays for pressure,
-current, and repair steps.
+runs to the end of the narration. `src/EngineeringVisuals.tsx` contains
+frame-driven pump, pressure-tank, pressure-switch, motor, and repair cutaways.
+The original hardware images remain unchanged in `public/assets/` and appear
+as supporting references beside the animated engineering illustrations.
+
+The tank cutaway models a flexible water bladder with compressed air outside
+it. Its normal-cycle animation uses 30 PSI cut-in, 50 PSI cut-out, and identifies
+28 PSI as a setup pre-charge measured with the water side drained to zero.
+Failure visuals distinguish lost pre-charge from a ruptured bladder. The motor
+current and cycle-rate examples are illustrative, not universal specifications.
+The repair sequence isolates and verifies power, drains the water side before
+air adjustment, and treats a damaged bladder as a tank-replacement condition.
 
 The pump photo is by Elsie esq. (CC BY 2.0; thumbnail sourced via Openverse):
 https://www.flickr.com/photos/61132483@N00/4869331575
@@ -19,6 +28,8 @@ https://creativecommons.org/licenses/by-sa/4.0/
 
 Regenerate the pressure-switch and motor renders with
 `python3 scripts/generate-hardware-assets.py` (requires Pillow).
+This script only regenerates `pressure-switch-gauge.jpg` and
+`electric-motor.jpg`; it does not modify the original hardware photographs.
 
 ## Run
 
