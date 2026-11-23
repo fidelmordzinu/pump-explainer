@@ -500,8 +500,8 @@ export const FailedTankComparison: React.FC<{frame: number}> = ({frame}) => {
       <TankVessel x={341} y={96} width={170} height={354} waterFraction={0.57} id="ruptured-tank" ruptured />
       {svgText("A · LOST PRE-CHARGE", 201, 72, C.amber, 13, "middle")}
       {svgText("SMALL AIR CUSHION", 201, 470, C.muted, 10, "middle")}
-      {svgText("B · RUPTURED BLADDER", 426, 72, C.red, 13, "middle")}
-      {svgText("WATER CROSSES SEPARATOR", 426, 470, C.muted, 10, "middle")}
+      {svgText("B · DAMAGED BLADDER", 426, 72, C.red, 13, "middle")}
+      {svgText("BLADDER LETS WATER THROUGH", 426, 470, C.muted, 10, "middle")}
       <path d="M201 451v42h49" fill="none" stroke="#536775" strokeWidth="12" />
       <path d="M201 451v42h49" fill="none" stroke={C.water} strokeWidth="5" strokeDasharray="8 12" strokeDashoffset={-frame * 1.8} />
       <path d="M426 451v42h49" fill="none" stroke="#536775" strokeWidth="12" />

@@ -35,43 +35,43 @@ const SCENES = [
     badge: "THE PROBLEM",
     status: "✗ SHORT-CYCLING",
     title: "Your pump keeps\nstarting and stopping.",
-    body: "It may seem harmless. Repeated starts can destroy your motor over time.",
-    kicker: "EVERY FEW SECONDS",
+    body: "A few seconds later, it starts again. Repeated starts can wear out the motor.",
+    kicker: "PUMP ON · PUMP OFF · PUMP ON",
   },
   {
     badge: "HOW IT SHOULD WORK",
     status: "NORMAL",
-    title: "The tank stores\npressurised water.",
-    body: "A rubber bladder separates water from compressed air. The pump stops at 50 PSI and restarts at 30 PSI.",
-    kicker: "AIR PRE-CHARGE · 28 PSI",
+    title: "The tank holds water\nfor you.",
+    body: "Compressed air acts like a spring and pushes water through the tap. The pump stops at 50 PSI and starts again at 30 PSI.",
+    kicker: "AIR PRESSURE IN THE EMPTY TANK · 28 PSI",
   },
   {
     badge: "THE FAILURE",
-    status: "WATERLOGGED",
-    title: "When the tank\nloses its air…",
-    body: "A failed bladder or lost pre-charge leaves little stored pressure. Even a small draw makes PSI plunge.",
-    kicker: "PRESSURE DROPS FAST",
+    status: "LITTLE STORAGE",
+    title: "The tank cannot\nstore enough water.",
+    body: "Lost air and a ruptured bladder are two different failures. A small draw can make pressure fall fast.",
+    kicker: "PRESSURE FALLS · PUMP RESTARTS",
   },
   {
     badge: "THE RESULT",
-    status: "CYCLES / HR",
-    title: "The switch can't\nstop clicking.",
-    body: "Rapid pressure changes make the switch restart the pump far more often than designed.",
+    status: "SWITCH RESTARTS PUMP",
+    title: "The pressure switch\nsenses the drop.",
+    body: "At 30 PSI, the switch turns the pump on. Repeated starts add stress and heat.",
     kicker: "REPEATED RESTARTS",
   },
   {
     badge: "WHY IT MATTERS",
-    status: "5–6x INRUSH",
-    title: "Every start hits\nthe motor hard.",
-    body: "Startup current heats the windings. Repeated heat accelerates insulation wear—and motor failure.",
-    kicker: "RUN 8 A  ·  START 46 A",
+    status: "STARTUP + HEAT",
+    title: "Starting draws extra\nelectricity.",
+    body: "Every start can draw more electricity than steady running. Repeated starting builds heat in the motor.",
+    kicker: "ILLUSTRATIVE GRAPH · NOT A MOTOR SPECIFICATION",
   },
   {
     badge: "THE FIX",
     status: "FIXING",
-    title: "Reset the tank.\nProtect the motor.",
-    body: "Switch off power. Drain to zero. Set pre-charge to 28 PSI. Replace a tank with a damaged bladder.",
-    kicker: "✓ PROTECTED",
+    title: "Check it safely.\nFix the right problem.",
+    body: "Switch off power, drain to zero, then set air pressure to 28 PSI. Replace the tank if the bladder is damaged.",
+    kicker: "28 PSI · TANK DRAINED · ZERO WATER PRESSURE",
   },
 ];
 
@@ -424,15 +424,12 @@ const Scene: React.FC<{
 export const PumpExplainer: React.FC = () => {
   const frame = useCurrentFrame();
   const {durationInFrames, fps} = useVideoConfig();
-  const sceneStarts = [0, 16, 30, 46, 60, 76].map((seconds) =>
-    Math.round(seconds * fps),
-  );
-  const boundaries =
-    durationInFrames >= sceneStarts[sceneStarts.length - 1]
-      ? [...sceneStarts, durationInFrames]
-      : Array.from({length: 7}, (_, i) =>
-          Math.floor((durationInFrames * i) / 6),
-        );
+  const measuredSceneStartsSeconds = [7.700, 21.340, 53.920, 70.860, 80.160, 92.920];
+  const boundaries = [
+    0,
+    ...measuredSceneStartsSeconds.slice(1).map((seconds) => Math.round(seconds * fps)),
+    durationInFrames,
+  ];
 
   return (
     <AbsoluteFill>
