@@ -2,6 +2,7 @@ import React from "react";
 import {
   AbsoluteFill,
   Audio,
+  Img,
   interpolate,
   Sequence,
   staticFile,
@@ -40,7 +41,7 @@ const SCENES = [
   },
   {
     badge: "THE FAILURE",
-    status: "BEFORE · WATERLOGGED",
+    status: "WATERLOGGED",
     title: "When the tank\nloses its air…",
     body: "A failed bladder or lost pre-charge leaves little stored pressure. Even a small draw makes PSI plunge.",
     kicker: "PRESSURE DROPS FAST",
@@ -65,6 +66,28 @@ const SCENES = [
     title: "Reset the tank.\nProtect the motor.",
     body: "Switch off power. Drain to zero. Set pre-charge to 28 PSI. Replace a tank with a damaged bladder.",
     kicker: "✓ PROTECTED",
+  },
+];
+
+const FIX_IMAGES: Array<{
+  src: string;
+  alt: string;
+  tone: "cool" | "warm";
+}> = [
+  {
+    src: "breaker-panel.jpg",
+    alt: "Electrical breaker and disconnect panel",
+    tone: "warm",
+  },
+  {
+    src: "pressure-tank.jpg",
+    alt: "Pressure tank",
+    tone: "cool",
+  },
+  {
+    src: "pressure-switch-gauge.jpg",
+    alt: "Pressure switch and gauge",
+    tone: "cool",
   },
 ];
 
@@ -517,29 +540,334 @@ const FixSteps: React.FC<{frame: number}> = ({frame}) => {
   );
 };
 
+const PhotoStage: React.FC<{
+  src: string;
+  alt: string;
+  frame: number;
+  width: number;
+  height: number;
+  tone?: "cool" | "failure" | "warm";
+  children?: React.ReactNode;
+}> = ({src, alt, frame, width, height, tone = "cool", children}) => {
+  const pan = interpolate(frame, [0, 180], [0, -13], {
+    extrapolateLeft: "clamp",
+    extrapolateRight: "clamp",
+  });
+  const tilt = interpolate(frame, [0, 180], [-1.4, 1.4], {
+    extrapolateLeft: "clamp",
+    extrapolateRight: "clamp",
+  });
+  const filter =
+    tone === "failure"
+      ? "brightness(0.72) saturate(0.78) sepia(0.12)"
+      : tone === "warm"
+        ? "brightness(0.88) saturate(1.25) sepia(0.12)"
+        : "brightness(0.9) saturate(1.08)";
+
+  return (
+    <div
+      style={{
+        position: "relative",
+        width,
+        height,
+        flexShrink: 0,
+        overflow: "hidden",
+        borderRadius: 26,
+        border: "1px solid rgba(148,163,184,0.42)",
+        background: "#111827",
+        boxShadow: "0 24px 55px rgba(0,0,0,0.42)",
+        transform: `perspective(1400px) rotateY(${tilt}deg) rotateX(1deg)`,
+      }}
+    >
+      <Img
+        src={staticFile(`assets/${src}`)}
+        alt={alt}
+        style={{
+          width: "100%",
+          height: "100%",
+          objectFit: "cover",
+          transform: `scale(1.06) translateX(${pan}px)`,
+          filter,
+        }}
+      />
+      <div
+        style={{
+          position: "absolute",
+          inset: 0,
+          background:
+            "linear-gradient(180deg, rgba(4,10,19,0.04) 45%, rgba(4,10,19,0.72) 100%), radial-gradient(ellipse at 50% 30%, transparent 36%, rgba(2,8,16,0.34) 100%)",
+        }}
+      />
+      {children}
+    </div>
+  );
+};
+
+const MetricCard: React.FC<{
+  label: string;
+  value: string;
+  detail: string;
+  tone?: string;
+  fontSize?: number;
+}> = ({label, value, detail, tone = C.cyan, fontSize = 39}) => (
+  <div
+    style={{
+      padding: "26px 28px",
+      borderRadius: 24,
+      background: "rgba(12,21,35,0.92)",
+      border: `1px solid ${tone}55`,
+      boxShadow: "0 14px 36px rgba(0,0,0,0.24)",
+    }}
+  >
+    <Label color={tone} style={{fontSize: 16}}>
+      {label}
+    </Label>
+    <div
+      style={{
+        marginTop: 13,
+        color: C.text,
+        fontSize,
+        fontWeight: 800,
+        letterSpacing: "-0.06em",
+        whiteSpace: "nowrap",
+        ...mono,
+      }}
+    >
+      {value}
+    </div>
+    <Label color={C.muted} style={{fontSize: 14, marginTop: 10}}>
+      {detail}
+    </Label>
+  </div>
+);
+
 const SceneVisual: React.FC<{scene: number; frame: number}> = ({scene, frame}) => {
+  const cycles = Math.round(
+    interpolate(frame, [0, 400], [4, 44], {
+      extrapolateLeft: "clamp",
+      extrapolateRight: "clamp",
+    }),
+  );
+  const ampPhase = frame % 75;
+  const amps =
+    ampPhase < 22
+      ? Math.round(
+          interpolate(ampPhase, [0, 6, 22], [8, 46, 8], {
+            extrapolateRight: "clamp",
+          }),
+        )
+      : 8;
+
   const visuals: React.ReactNode[] = [
-    <div key="hook" style={{display: "flex", flexDirection: "column", alignItems: "center", gap: 42}}>
-      <PumpGlyph frame={frame} />
-      <div style={{display: "flex", alignItems: "center", gap: 12}}>
-        {Array.from({length: 7}, (_, i) => (
-          <div key={i} style={{height: i % 2 === 0 ? 13 : 7, width: i % 2 === 0 ? 13 : 9, borderRadius: 9, background: i < Math.floor(frame / 5) % 8 ? C.red : "#334155"}} />
-        ))}
-      </div>
-      <div style={{display: "flex", gap: 18}}>
-        <StatusPill text="ON" tone={C.green} />
-        <StatusPill text="OFF" tone={C.red} />
-        <StatusPill text="ON" tone={C.green} />
-        <StatusPill text="OFF" tone={C.red} />
+    <div key="pump" style={{width: 840}}>
+      <PhotoStage
+        src="pump-system.jpg"
+        alt="Detailed water booster pump with metal piping and a pressure gauge"
+        frame={frame}
+        width={840}
+        height={500}
+      >
+        <div
+          style={{
+            position: "absolute",
+            left: 22,
+            bottom: 22,
+            display: "flex",
+            gap: 12,
+          }}
+        >
+          <StatusPill text="ON - OFF" tone={C.red} />
+          <StatusPill text="REPEATING" tone={C.amber} />
+        </div>
+      </PhotoStage>
+    </div>,
+    <div key="normal-tank" style={{display: "flex", alignItems: "center", gap: 24}}>
+      <PhotoStage
+        src="pressure-tank.jpg"
+        alt="Pressurized water expansion tank connected to plumbing"
+        frame={frame}
+        width={360}
+        height={560}
+      />
+      <div style={{width: 420, display: "flex", flexDirection: "column", gap: 20}}>
+        <MetricCard
+          label="NORMAL PRESSURE BAND"
+          value="50 PSI → 30 PSI"
+          detail="PUMP CUT-OUT → CUT-IN"
+          fontSize={33}
+        />
+        <MetricCard
+          label="AIR PRE-CHARGE"
+          value="28 PSI"
+          detail="2 PSI BELOW THE 30 PSI CUT-IN"
+          tone="#C4B5FD"
+        />
       </div>
     </div>,
-    <PressureTank key="normal" frame={frame} />,
-    <PressureTank key="failed" frame={frame} waterlogged />,
-    <PressureSwitch key="switch" frame={frame} />,
-    <MotorCutaway key="motor" frame={frame} />,
-    <FixSteps key="fix" frame={frame} />,
+    <div key="failed-tank" style={{display: "flex", alignItems: "center", gap: 24}}>
+      <PhotoStage
+        src="pressure-tank.jpg"
+        alt="Pressure tank showing its plumbing connection"
+        frame={frame}
+        width={360}
+        height={560}
+        tone="failure"
+      >
+        <div
+          style={{
+            position: "absolute",
+            top: 18,
+            left: 18,
+            padding: "11px 15px",
+            borderRadius: 999,
+            background: "rgba(74,18,31,0.88)",
+            border: `1px solid ${C.red}88`,
+            color: "#FFE4E6",
+            ...mono,
+            fontSize: 14,
+            fontWeight: 800,
+          }}
+        >
+          AIR LOSS
+        </div>
+      </PhotoStage>
+      <div style={{width: 420, display: "flex", flexDirection: "column", gap: 20}}>
+        <MetricCard
+          label="BLADDER FAILURE"
+          value="46 → 5 PSI"
+          detail="PRESSURE COLLAPSES ON A SMALL DRAW"
+          tone={C.red}
+        />
+        <div
+          style={{
+            padding: "20px 24px",
+            borderRadius: 24,
+            background: "rgba(12,21,35,0.92)",
+            border: `1px solid ${C.red}55`,
+          }}
+        >
+          <Label color={C.red} style={{fontSize: 15}}>
+            FAST PRESSURE DROP
+          </Label>
+          <svg width="370" height="100" viewBox="0 0 370 100" style={{marginTop: 12}}>
+            <path d="M4 13H366M4 50H366M4 87H366" stroke="#334155" strokeWidth="2" />
+            <path
+              d="M8 16L90 20L157 27L208 40L246 63L282 75L360 83"
+              fill="none"
+              stroke={C.red}
+              strokeWidth="7"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+            <circle cx="360" cy="83" r="8" fill={C.red} />
+          </svg>
+        </div>
+      </div>
+    </div>,
+    <div key="switch" style={{display: "flex", alignItems: "center", gap: 24}}>
+      <PhotoStage
+        src="pressure-switch-gauge.jpg"
+        alt="Mechanical pressure gauge and pressure switch on a pipe"
+        frame={frame}
+        width={600}
+        height={450}
+      />
+      <MetricCard
+        label="CYCLES / HR"
+        value={`04 → ${String(cycles).padStart(2, "0")}`}
+        detail="RAPID RESTARTS"
+        tone={C.amber}
+        fontSize={36}
+      />
+    </div>,
+    <div key="motor" style={{display: "flex", alignItems: "center", gap: 24}}>
+      <PhotoStage
+        src="electric-motor.jpg"
+        alt="Electric motor cutaway with copper stator windings"
+        frame={frame}
+        width={600}
+        height={450}
+        tone="warm"
+      />
+      <div style={{width: 250, display: "flex", flexDirection: "column", gap: 18}}>
+        <MetricCard
+          label="STARTUP CURRENT"
+          value="8 A → 46 A"
+          detail="5–6x INRUSH"
+          tone={C.amber}
+          fontSize={30}
+        />
+        <div
+          style={{
+            padding: "18px 22px",
+            borderRadius: 22,
+            background: "rgba(12,21,35,0.92)",
+            border: `1px solid ${C.amber}55`,
+          }}
+        >
+          <Label color={C.amber} style={{fontSize: 15}}>
+            LIVE AMPS
+          </Label>
+          <div style={{display: "flex", alignItems: "baseline", gap: 8, marginTop: 8}}>
+            <span style={{color: C.text, fontSize: 52, fontWeight: 800, ...mono}}>
+              {amps}
+            </span>
+            <span style={{color: C.amber, fontSize: 20, ...mono}}>A</span>
+          </div>
+          <div
+            style={{
+              height: 9,
+              marginTop: 8,
+              borderRadius: 9,
+              background: "#334155",
+              overflow: "hidden",
+            }}
+          >
+            <div
+              style={{
+                width: `${(amps / 46) * 100}%`,
+                height: "100%",
+                background: `linear-gradient(90deg, ${C.amber}, ${C.red})`,
+              }}
+            />
+          </div>
+        </div>
+      </div>
+    </div>,
+    <div key="fix" style={{width: "100%"}}>
+      <div style={{display: "flex", gap: 16, marginBottom: 20}}>
+        {FIX_IMAGES.map(({src, alt, tone}) => (
+          <PhotoStage
+            key={src}
+            src={src}
+            alt={alt}
+            frame={frame}
+            width={278}
+            height={176}
+            tone={tone}
+          />
+        ))}
+      </div>
+      <FixSteps frame={frame} />
+      <div style={{display: "flex", justifyContent: "flex-end", marginTop: 16}}>
+        <StatusPill text="PROTECTED" tone={C.green} />
+      </div>
+    </div>,
   ];
-  return <div style={{...fadeUp(frame, 11), minHeight: 670, display: "flex", justifyContent: "center", alignItems: "center"}}>{visuals[scene]}</div>;
+
+  return (
+    <div
+      style={{
+        ...fadeUp(frame, 11),
+        minHeight: 670,
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+      }}
+    >
+      {visuals[scene]}
+    </div>
+  );
 };
 
 const Scene: React.FC<{
@@ -580,10 +908,16 @@ const Scene: React.FC<{
 
 export const PumpExplainer: React.FC = () => {
   const frame = useCurrentFrame();
-  const {durationInFrames} = useVideoConfig();
-  const boundaries = Array.from({length: 7}, (_, i) =>
-    Math.floor((durationInFrames * i) / 6),
+  const {durationInFrames, fps} = useVideoConfig();
+  const sceneStarts = [0, 16, 30, 46, 60, 76].map((seconds) =>
+    Math.round(seconds * fps),
   );
+  const boundaries =
+    durationInFrames >= sceneStarts[sceneStarts.length - 1]
+      ? [...sceneStarts, durationInFrames]
+      : Array.from({length: 7}, (_, i) =>
+          Math.floor((durationInFrames * i) / 6),
+        );
 
   return (
     <AbsoluteFill>
