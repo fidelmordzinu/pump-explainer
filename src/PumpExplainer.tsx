@@ -17,6 +17,9 @@ import {
   PumpSystemAnimation,
   TechnicianRepairSequence,
 } from "./EngineeringVisuals";
+import {RealisticTank3D} from "./RealisticTank3D";
+import {RealisticTankComparison3D} from "./RealisticTankComparison3D";
+import {REELS_SAFE_AREA} from "./reelsSafeArea";
 
 const C = {
   bg: "#0B1120",
@@ -257,14 +260,14 @@ const Footer: React.FC<{text: string; tone?: string}> = ({
   <div
     style={{
       position: "absolute",
-      bottom: 69,
-      left: 72,
-      right: 72,
+      bottom: 0,
+      left: 0,
+      right: 0,
       display: "flex",
       alignItems: "center",
       justifyContent: "space-between",
       borderTop: `1px solid ${C.border}`,
-      paddingTop: 25,
+      paddingTop: 22,
     }}
   >
     <Label color={tone}>{text}</Label>
@@ -320,11 +323,11 @@ const ReferenceStrip: React.FC<{scene: number}> = ({scene}) => {
   );
 };
 
-const SceneVisual: React.FC<{scene: number; frame: number}> = ({scene, frame}) => {
+const SceneVisual: React.FC<{scene: number; frame: number; duration: number}> = ({scene, frame, duration}) => {
   const visuals: React.ReactNode[] = [
     <PumpSystemAnimation key="pump-system" frame={frame} />,
-    <NormalTankCycle key="normal-tank" frame={frame} />,
-    <FailedTankComparison key="failed-tank" frame={frame} />,
+    <RealisticTank3D key="normal-tank-3d" progress={Math.max(0, Math.min(1, frame / Math.max(1, duration - 1)))} width={820} height={560} mode="healthy" showGauge />,
+    <RealisticTankComparison3D key="failed-tank-3d" />,
     <PressureSwitchMechanism key="pressure-switch" frame={frame} />,
     <MotorStressAnimation key="motor" frame={frame} />,
     <TechnicianRepairSequence key="repair" frame={frame} />,
@@ -351,7 +354,8 @@ const Scene: React.FC<{
   frame: number;
   startFrame: number;
   totalFrames: number;
-}> = ({index, frame, startFrame, totalFrames}) => {
+  sceneDuration: number;
+}> = ({index, frame, startFrame, totalFrames, sceneDuration}) => {
   const scene = SCENES[index];
   const tone =
     index === 0 || index === 4
@@ -367,7 +371,6 @@ const Scene: React.FC<{
       style={{
         backgroundColor: C.bg,
         color: C.text,
-        padding: "66px 72px",
         overflow: "hidden",
       }}
     >
@@ -389,34 +392,43 @@ const Scene: React.FC<{
           opacity: 0.7,
         }}
       />
-      <div style={{position: "relative", zIndex: 1}}>
+      <div
+        style={{
+          position: "absolute",
+          top: REELS_SAFE_AREA.top,
+          bottom: REELS_SAFE_AREA.bottom,
+          left: REELS_SAFE_AREA.left,
+          right: REELS_SAFE_AREA.right,
+          zIndex: 1,
+        }}
+      >
         <Header scene={index} progress={(startFrame + frame) / totalFrames} badge={scene.badge} />
-        <div style={{marginTop: 25}}>
+        <div style={{marginTop: 18}}>
           <StatusPill text={scene.status} tone={tone} />
         </div>
         <SceneHeading title={scene.title} body={scene.body} frame={frame} />
         <div
           style={{
-            marginTop: 35,
-            padding: "18px 10px 14px",
-            borderRadius: 32,
+            marginTop: 24,
+            padding: "14px 10px 12px",
+            borderRadius: 28,
             background: "linear-gradient(145deg, rgba(30,41,59,0.78), rgba(15,23,42,0.8))",
             border: `1px solid ${C.border}`,
             boxShadow: "0 30px 80px rgba(0,0,0,0.24)",
           }}
         >
-          <SceneVisual scene={index} frame={frame} />
+          <SceneVisual scene={index} frame={frame} duration={sceneDuration} />
         </div>
-        <div style={{marginTop: 26}}>
+        <div style={{marginTop: 18}}>
           <Label color={index === 5 ? C.green : C.muted} style={{fontSize: 17}}>
             {scene.kicker}
           </Label>
         </div>
+        <Footer
+          text={index === 5 ? "PROTECT THE PRESSURE TANK. PROTECT THE MOTOR." : "PRESSURE TANK → SWITCH → MOTOR"}
+          tone={index === 5 ? C.green : C.cyan}
+        />
       </div>
-      <Footer
-        text={index === 5 ? "PROTECT THE PRESSURE TANK. PROTECT THE MOTOR." : "PRESSURE TANK → SWITCH → MOTOR"}
-        tone={index === 5 ? C.green : C.cyan}
-      />
     </AbsoluteFill>
   );
 };
@@ -443,6 +455,7 @@ export const PumpExplainer: React.FC = () => {
               frame={frame - from}
               startFrame={from}
               totalFrames={durationInFrames}
+              sceneDuration={duration}
             />
           </Sequence>
         );
